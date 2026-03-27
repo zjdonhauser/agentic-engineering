@@ -1126,8 +1126,13 @@ Output scored issues with file:line references.
 
     // Animate the old section out, then switch
     animateOut(prevSection, function() {
+      // Kill prev section instantly — skip the 0.7s CSS fade-out
+      prevSection.style.transition = 'none';
       prevSection.classList.remove('active');
       clearAnimations(prevSection);
+      void prevSection.offsetWidth; // flush the instant hide
+      prevSection.style.removeProperty('transition');
+
       clearAnimations(sections[current]);
       sections.forEach(function(s, i) { s.classList.toggle('active', i === current); });
       animateIn(sections[current]);
