@@ -1,0 +1,1377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agentic Engineering @ SafeLease</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --surface-2: #1c2128;
+    --border: #30363d;
+    --border-light: #21262d;
+    --blue: #58a6ff;
+    --blue-dim: rgba(88, 166, 255, 0.15);
+    --blue-glow: rgba(88, 166, 255, 0.1);
+    --green: #7ee787;
+    --green-dim: rgba(126, 231, 135, 0.15);
+    --orange: #ffa657;
+    --orange-dim: rgba(255, 166, 87, 0.12);
+    --red: #ff7b72;
+    --red-dim: rgba(255, 123, 114, 0.12);
+    --purple: #d2a8ff;
+    --yellow: #e3b341;
+    --text: #e6edf3;
+    --text-secondary: #c9d1d9;
+    --text-dim: #8b949e;
+    --text-muted: #484f58;
+    --mono: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
+    --sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    background: #000;
+    color: var(--text);
+    font-family: var(--sans);
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+  }
+
+  .frame {
+    position: absolute;
+    width: 1920px;
+    height: 1080px;
+    transform-origin: top left;
+    background: var(--bg);
+    overflow: hidden;
+  }
+
+  .frame::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(88, 166, 255, 0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(88, 166, 255, 0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .frame::after {
+    content: '';
+    position: absolute;
+    width: 1000px;
+    height: 1000px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    background: radial-gradient(circle, var(--blue-glow) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+    animation: breathe 8s ease-in-out infinite;
+  }
+
+  @keyframes breathe {
+    0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+    50% { transform: translate(-50%, -50%) scale(1.15); opacity: 0.6; }
+  }
+
+  /* ── Ghost mascot ── */
+  /* ── Ghost progress indicator ── */
+  .ghost-track {
+    position: fixed;
+    bottom: 20px;
+    left: 40px;
+    right: 40px;
+    height: 2px;
+    background: var(--border);
+    border-radius: 1px;
+    z-index: 300;
+  }
+  .ghost {
+    position: fixed;
+    bottom: 10px;
+    left: 40px;
+    font-size: 28px;
+    z-index: 301;
+    pointer-events: none;
+    opacity: 0.5;
+    filter: drop-shadow(0 0 8px rgba(88, 166, 255, 0.4));
+    transition: left 0.7s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.3s ease;
+    animation: ghostFloat 3s ease-in-out infinite;
+  }
+  .ghost:hover { opacity: 0.8; pointer-events: auto; }
+  @keyframes ghostFloat {
+    0% { transform: translateX(0) rotate(0deg); }
+    25% { transform: translateX(8px) rotate(2deg); }
+    50% { transform: translateX(-8px) rotate(-2deg); }
+    75% { transform: translateX(6px) rotate(1deg); }
+    100% { transform: translateX(0) rotate(0deg); }
+  }
+  .ghost.jumping {
+    animation: ghostHop 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+    opacity: 0.7;
+  }
+  @keyframes ghostHop {
+    0% { transform: translate(0, 0) rotate(0deg) scale(1); }
+    40% { transform: translate(0, -30px) rotate(-8deg) scale(1.2); }
+    70% { transform: translate(0, -20px) rotate(5deg) scale(1.15); }
+    100% { transform: translate(0, 0) rotate(0deg) scale(1); }
+  }
+
+  /* ── Sections ── */
+  .section {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 60px 120px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.7s ease, transform 0.7s ease, filter 0.7s ease;
+    z-index: 1;
+    transform: scale(0.97) translateY(10px);
+    filter: blur(4px);
+  }
+  .section.active {
+    opacity: 1;
+    pointer-events: all;
+    transform: scale(1) translateY(0);
+    filter: blur(0);
+  }
+  /* Base state for .anim children (hidden) */
+  .section .anim {
+    opacity: 0;
+    transform: translateY(14px);
+    transition: opacity 0.6s cubic-bezier(0.22, 1, 0.36, 1), transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  /* Enter state */
+  .section.active .anim {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .section.active .anim:nth-child(1) { transition-delay: 0.15s; }
+  .section.active .anim:nth-child(2) { transition-delay: 0.3s; }
+  .section.active .anim:nth-child(3) { transition-delay: 0.45s; }
+  .section.active .anim:nth-child(4) { transition-delay: 0.6s; }
+  .section.active .anim:nth-child(5) { transition-delay: 0.75s; }
+  .section.active .anim:nth-child(6) { transition-delay: 0.9s; }
+  .section.active .anim:nth-child(7) { transition-delay: 1.05s; }
+  .section.active .anim:nth-child(8) { transition-delay: 1.2s; }
+
+  /* ── Typography ── */
+  h1 {
+    font-family: var(--sans);
+    font-weight: 800;
+    font-size: 64px;
+    line-height: 1.1;
+    letter-spacing: -0.03em;
+    color: var(--text);
+  }
+  h1 .grad {
+    background: linear-gradient(135deg, var(--text), var(--blue), var(--green), var(--blue), var(--text));
+    background-size: 300% 300%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: gradientShift 8s ease infinite;
+  }
+  @keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+  h2 {
+    font-family: var(--sans);
+    font-weight: 600;
+    font-size: 28px;
+    color: var(--text-dim);
+    letter-spacing: -0.01em;
+  }
+  .label {
+    font-family: var(--mono);
+    font-weight: 600;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--blue);
+    margin-bottom: 12px;
+  }
+  p, li { font-size: 18px; line-height: 1.7; color: var(--text-secondary); }
+
+  /* ── Terminal ── */
+  .terminal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 0 0 1px rgba(88,166,255,0.04), 0 8px 40px rgba(0,0,0,0.3);
+    transition: box-shadow 0.4s ease;
+  }
+  .section.active .terminal {
+    animation: termGlow 3s ease-in-out 0.8s both;
+  }
+  @keyframes termGlow {
+    0% { box-shadow: 0 0 0 1px rgba(88,166,255,0.04), 0 8px 40px rgba(0,0,0,0.3); }
+    50% { box-shadow: 0 0 0 1px rgba(88,166,255,0.12), 0 8px 40px rgba(0,0,0,0.3), 0 0 30px rgba(88,166,255,0.06); }
+    100% { box-shadow: 0 0 0 1px rgba(88,166,255,0.06), 0 8px 40px rgba(0,0,0,0.3), 0 0 15px rgba(88,166,255,0.03); }
+  }
+  .terminal-header {
+    display: flex; align-items: center; gap: 8px;
+    padding: 12px 16px;
+    background: var(--surface-2);
+    border-bottom: 1px solid var(--border);
+  }
+  .dot { width: 12px; height: 12px; border-radius: 50%; }
+  .dot-r { background: #ff5f57; }
+  .dot-y { background: #febc2e; }
+  .dot-g { background: #28c840; }
+  .terminal-title {
+    flex: 1; text-align: center;
+    font-family: var(--mono); font-size: 12px; color: var(--text-muted);
+  }
+  .terminal-body {
+    padding: 1.25rem 1.5rem;
+    font-family: var(--mono); font-size: 14px; line-height: 1.75;
+    color: var(--text-dim); overflow-x: auto; position: relative;
+  }
+  .tline {
+    white-space: pre; display: block; min-height: 1.75em;
+    opacity: 0; transform: translateX(-6px); filter: blur(2px);
+    transition: opacity 0.5s ease, transform 0.5s ease, filter 0.5s ease;
+  }
+  .section.active .tline { opacity: 1; transform: translateX(0); filter: blur(0); }
+  .section.leaving .tline { opacity: 0; transform: translateX(6px); filter: blur(2px); }
+
+  .kw { color: var(--blue); } .fn { color: var(--green); } .str { color: var(--orange); }
+  .cmt { color: var(--text-muted); font-style: italic; } .val { color: var(--purple); }
+  .type { color: var(--red); }
+
+  /* ── Layout ── */
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+  .cols-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.25rem; }
+
+  /* ── Cards ── */
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 1.25rem 1.5rem;
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+  }
+  .card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3), 0 0 20px rgba(88,166,255,0.04);
+    border-color: rgba(88,166,255,0.2);
+  }
+  .card-label { font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px; }
+  .card-title { font-weight: 700; font-size: 18px; color: var(--text); margin-bottom: 6px; }
+  .card p { font-size: 15px; color: var(--text-dim); line-height: 1.6; }
+
+  /* ── Tweet card ── */
+  .tweet {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.25rem 1.5rem;
+    max-width: 38rem;
+    transition: border-color 0.3s ease;
+  }
+  .tweet:hover { border-color: rgba(88,166,255,0.2); }
+  .tweet-header { display: flex; align-items: center; gap: 10px; margin-bottom: 0.75rem; }
+  .tweet-avatar {
+    width: 44px; height: 44px; border-radius: 50%;
+    background: var(--surface-2); border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 18px; color: var(--text-dim);
+  }
+  .tweet-meta { display: flex; flex-direction: column; }
+  .tweet-name { font-weight: 700; font-size: 15px; color: var(--text); display: flex; align-items: center; gap: 4px; }
+  .tweet-handle { font-size: 13px; color: var(--text-muted); }
+  .tweet-body { font-size: 15.5px; line-height: 1.65; color: var(--text-secondary); font-family: var(--sans); }
+  .tweet-body .hl { font-weight: 700; font-style: normal; }
+  .tweet-footer { margin-top: 1rem; padding-top: 0.75rem; border-top: 1px solid var(--border-light); font-family: var(--mono); font-size: 11px; color: var(--text-muted); display: flex; gap: 2rem; }
+
+  /* ── Flow ── */
+  .flow { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+  .flow-box {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+    padding: 0.5rem 1rem; font-family: var(--mono); font-size: 13px; color: var(--text-dim); white-space: nowrap;
+  }
+  .flow-box.hl { border-color: var(--blue); background: var(--blue-dim); color: var(--blue); }
+  .flow-box.hl-green { border-color: var(--green); background: var(--green-dim); color: var(--green); }
+  .flow-box.hl-orange { border-color: var(--orange); background: var(--orange-dim); color: var(--orange); }
+  .flow-box.hl-red { border-color: var(--red); background: var(--red-dim); color: var(--red); }
+  .flow-arrow { color: var(--text-muted); font-family: var(--mono); font-size: 14px; }
+  .flow > * {
+    opacity: 0; transform: translateX(-8px);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .section.active .flow > *:nth-child(1) { opacity:1; transform:translateX(0); transition-delay:0.6s; }
+  .section.active .flow > *:nth-child(2) { opacity:1; transform:translateX(0); transition-delay:0.7s; }
+  .section.active .flow > *:nth-child(3) { opacity:1; transform:translateX(0); transition-delay:0.8s; }
+  .section.active .flow > *:nth-child(4) { opacity:1; transform:translateX(0); transition-delay:0.9s; }
+  .section.active .flow > *:nth-child(5) { opacity:1; transform:translateX(0); transition-delay:1.0s; }
+  .section.active .flow > *:nth-child(6) { opacity:1; transform:translateX(0); transition-delay:1.1s; }
+  .section.active .flow > *:nth-child(7) { opacity:1; transform:translateX(0); transition-delay:1.2s; }
+  .section.active .flow > *:nth-child(8) { opacity:1; transform:translateX(0); transition-delay:1.3s; }
+  .section.active .flow > *:nth-child(9) { opacity:1; transform:translateX(0); transition-delay:1.4s; }
+  .section.active .flow > *:nth-child(10) { opacity:1; transform:translateX(0); transition-delay:1.5s; }
+  .section.active .flow > *:nth-child(11) { opacity:1; transform:translateX(0); transition-delay:1.6s; }
+
+  /* ── Misc ── */
+  .insight {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 1rem 1.25rem; background: var(--blue-dim);
+    border: 1px solid rgba(88,166,255,0.15); border-radius: 8px;
+    font-size: 15px; color: var(--text-secondary); line-height: 1.6;
+  }
+  .insight-icon { font-size: 18px; flex-shrink: 0; margin-top: 2px; }
+
+  .badge {
+    display: inline-block; font-family: var(--mono); font-size: 11px;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    padding: 3px 10px; border-radius: 6px; margin-right: 6px;
+  }
+  .badge-blue { background: var(--blue-dim); color: var(--blue); border: 1px solid rgba(88,166,255,0.25); }
+  .badge-green { background: var(--green-dim); color: var(--green); border: 1px solid rgba(126,231,135,0.25); }
+  .badge-orange { background: var(--orange-dim); color: var(--orange); border: 1px solid rgba(255,166,87,0.25); }
+  .badge-red { background: var(--red-dim); color: var(--red); border: 1px solid rgba(255,123,114,0.25); }
+  .badge-purple { background: rgba(210,168,255,0.12); color: var(--purple); border: 1px solid rgba(210,168,255,0.25); }
+
+  .spectrum { display: flex; align-items: center; gap: 0; margin: 1.5rem 0; }
+  .spectrum-end { font-family: var(--mono); font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; padding: 8px 16px; border-radius: 6px; white-space: nowrap; }
+  .spectrum-bar { flex: 1; height: 3px; min-width: 80px; }
+
+  .nav-dots { display: none; }
+
+  .status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--green); box-shadow: 0 0 8px rgba(126,231,135,0.4); animation: pulse 2s ease-in-out infinite; }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+  .float-badge {
+    position: absolute; font-family: var(--mono); font-size: 12px; color: var(--text-muted);
+    background: rgba(22,27,34,0.7); border: 1px solid var(--border-light); border-radius: 6px;
+    padding: 4px 12px; white-space: nowrap; animation: float 6s ease-in-out infinite; z-index: 0;
+  }
+  @keyframes float { 0%, 100% { transform: translateY(0); opacity: 0.45; } 50% { transform: translateY(-12px); opacity: 0.75; } }
+</style>
+</head>
+<body>
+
+<canvas id="particles" style="position:fixed;inset:0;z-index:0;pointer-events:none;"></canvas>
+
+<div class="frame" id="frame">
+
+<div class="float-badge" style="top:8%;left:5%;animation-delay:0s;">stop_reason</div>
+<div class="float-badge" style="top:18%;right:7%;animation-delay:1.2s;">output_config.format</div>
+<div class="float-badge" style="bottom:22%;left:4%;animation-delay:2.5s;">cache_control: ephemeral</div>
+<div class="float-badge" style="bottom:10%;right:5%;animation-delay:3.8s;">CLAUDE.md</div>
+<div class="float-badge" style="top:42%;left:3%;animation-delay:1.8s;">tool_use → execute → loop</div>
+<div class="float-badge" style="top:38%;right:3%;animation-delay:0.6s;">json_schema</div>
+
+<!-- ═══════════ SECTION 0: TITLE ═══════════ -->
+<div class="section active" id="s0">
+  <div style="max-width:800px;">
+    <div class="terminal anim" style="margin-bottom:2.5rem;">
+      <div class="terminal-header">
+        <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
+        <div class="terminal-title">tc-engineering — presentation</div>
+      </div>
+      <div class="terminal-body"><span class="kw">~/tc-engineering</span> <span class="fn">$</span> <span style="color:var(--text);">cat agentic-engineering.md</span></div>
+    </div>
+    <div class="label anim">TC Engineering · SafeLease</div>
+    <h1 class="anim" style="font-size:80px;margin-bottom:12px;"><span class="grad">Agentic Engineering</span></h1>
+    <h2 class="anim" style="margin-bottom:2rem;">Concepts, Patterns, and How We Use Them</h2>
+    <p class="anim" style="max-width:44rem;color:var(--text-dim);font-size:16px;">
+      Key patterns from the Claude Certified Architect – Foundations exam, illustrated with
+      real code from our SHD diagnostic system.
+    </p>
+    <div class="anim" style="margin-top:2rem;font-family:var(--mono);font-size:12px;color:var(--text-muted);display:flex;align-items:center;gap:8px;">
+      <span class="status-dot"></span> March 2026 · Zac Donhauser
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ SECTION 1: KARPATHY ═══════════ -->
+<div class="section" id="s1">
+  <div class="label anim">The Evolution</div>
+  <h1 class="anim" style="margin-bottom:1.5rem;">Vibe Coding <span style="color:var(--text-muted);">→</span> <span class="grad">Agentic Engineering</span></h1>
+
+  <div class="cols anim" style="align-items:start;gap:2.5rem;">
+    <div class="tweet">
+      <div class="tweet-header">
+        <div class="tweet-avatar">AK</div>
+        <div class="tweet-meta">
+          <div class="tweet-name">Andrej Karpathy <span style="color:var(--blue);font-size:12px;">✓</span></div>
+          <div class="tweet-handle">@karpathy · Feb 2, 2025</div>
+        </div>
+      </div>
+      <div class="tweet-body">
+        There's a new kind of coding I call "<span class="hl" style="color:var(--orange);">vibe coding</span>",
+        where you fully give in to the vibes, embrace exponentials, and
+        <span class="hl" style="color:var(--orange);">forget that the code even exists</span>.
+        It's not really coding — I just see things, say things, run things,
+        and copy paste things, and it mostly works.
+      </div>
+      <div class="tweet-footer">
+        <span>♡ 12.4K</span><span>↻ 3.2K</span><span>💬 891</span>
+      </div>
+    </div>
+
+    <div class="tweet">
+      <div class="tweet-header">
+        <div class="tweet-avatar">AK</div>
+        <div class="tweet-meta">
+          <div class="tweet-name">Andrej Karpathy <span style="color:var(--blue);font-size:12px;">✓</span></div>
+          <div class="tweet-handle">@karpathy · Feb 4, 2026</div>
+        </div>
+      </div>
+      <div class="tweet-body">
+        Today (1 year later), programming via LLM agents is increasingly
+        becoming a default workflow for professionals, except with
+        <span class="hl" style="color:var(--green);">more oversight and scrutiny</span>.
+        The goal is to claim the leverage from agents but
+        <span class="hl" style="color:var(--green);">without any compromise on the quality</span> of the software.<br><br>
+
+        Personally my current favorite name: "<span class="hl" style="color:var(--green);">agentic engineering</span>":<br>
+        — "<span class="hl" style="color:var(--green);">agentic</span>" because you are
+        <span class="hl" style="color:var(--text);">orchestrating agents</span>, not writing code directly<br>
+        — "<span class="hl" style="color:var(--green);">engineering</span>" to emphasize there is an
+        <span class="hl" style="color:var(--text);">art &amp; science</span> to it — something you can learn and get better at
+      </div>
+      <div class="tweet-footer">
+        <span>♡ 18.7K</span><span>↻ 5.1K</span><span>💬 1.3K</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════ SECTION 2: THE AGENTIC LOOP ═══════════ -->
+<div class="section" id="s2">
+  <div class="label anim">Concept 1 · Agentic Architecture</div>
+  <h1 class="anim" style="margin-bottom:0.5rem;">The Agentic Loop</h1>
+  <p class="anim" style="color:var(--text-dim);max-width:52rem;margin-bottom:0.75rem;">Every agentic system — Claude Code, custom agents, the Agent SDK — runs the same fundamental cycle. The model reasons, optionally requests tools, you execute them, feed results back. <code style="color:var(--orange);">stop_reason</code> is the only reliable signal for loop control.</p>
+
+  <div class="flow anim" style="margin-bottom:1.25rem;">
+    <div class="flow-box hl">Send to Claude</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box" style="border-color:var(--orange);color:var(--orange);">Check stop_reason</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box" style="border-color:var(--purple);color:var(--purple);">tool_use?</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box hl-green">Execute Tools</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">Append Results</div>
+    <div class="flow-arrow">↺</div>
+    <div class="flow-box hl-orange">end_turn → Extract</div>
+  </div>
+
+  <div class="cols anim">
+    <div class="terminal">
+      <div class="terminal-header">
+        <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
+        <div class="terminal-title">claude-agent.ts:792 — runDiagnosticAgent()</div>
+      </div>
+      <div class="terminal-body"><span class="kw">for</span> (<span class="kw">let</span> turn = <span class="val">0</span>; turn &lt; <span class="val">MAX_TURNS</span>; turn++) {
+  <span class="kw">const</span> response = <span class="kw">await</span> client.messages.<span class="fn">create</span>({
+    model,
+    max_tokens: <span class="val">16384</span>,
+    system: systemPrompt,
+    tools: <span class="val">TOOLS</span>,
+    messages,
+    thinking: { type: <span class="str">"adaptive"</span> },
+    output_config: { format: <span class="val">DIAGNOSTIC_OUTPUT_FORMAT</span> },
+  });
+
+  messages.<span class="fn">push</span>({ role: <span class="str">"assistant"</span>, content: response.content });
+
+  <span class="kw">if</span> (response.stop_reason === <span class="str">"end_turn"</span>) {
+    <span class="kw">return</span> <span class="fn">extractResult</span>(response.content);
+  }
+
+  <span class="cmt">// Execute all tool calls in parallel</span>
+  <span class="kw">const</span> toolUseBlocks = response.content.<span class="fn">filter</span>(b =&gt; b.type === <span class="str">"tool_use"</span>);
+  <span class="kw">const</span> toolResults = <span class="kw">await</span> Promise.<span class="fn">all</span>(
+    toolUseBlocks.<span class="fn">map</span>(<span class="kw">async</span> (block) =&gt; ({
+      type: <span class="str">"tool_result"</span>,
+      tool_use_id: block.id,
+      content: <span class="kw">await</span> <span class="fn">executeTool</span>(block.name, block.input),
+    }))
+  );
+  messages.<span class="fn">push</span>({ role: <span class="str">"user"</span>, content: toolResults });
+}</div>
+    </div>
+    <div>
+      <div class="card" style="margin-bottom:0.75rem;">
+        <div class="card-label" style="color:var(--orange);">The signal</div>
+        <div class="card-title">stop_reason drives everything</div>
+        <p><code style="color:var(--orange);">tool_use</code> → execute, feed back, loop. <code style="color:var(--green);">end_turn</code> → done, extract structured result. This is how Claude Code works internally too.</p>
+      </div>
+      <div class="card" style="margin-bottom:0.75rem;">
+        <div class="card-label" style="color:var(--green);">Parallel execution</div>
+        <div class="card-title">Promise.all on tool calls</div>
+        <p>The model can request multiple tools in one turn. Execute them all in parallel — don't serialize what can be concurrent.</p>
+      </div>
+      <div class="card">
+        <div class="card-label" style="color:var(--red);">Anti-pattern</div>
+        <div class="card-title">Never parse text to detect completion</div>
+        <p>Don't check for "DONE" in the response text. Don't set arbitrary iteration caps as the <em>primary</em> stop mechanism. <code>stop_reason</code> is the API contract.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ SECTION 3: CONTEXT ENGINEERING ═══════════ -->
+<div class="section" id="s3">
+  <div class="label anim">Concept 2 · Context Management</div>
+  <h1 class="anim" style="margin-bottom:0.5rem;">Context Engineering</h1>
+  <p class="anim" style="color:var(--text-dim);max-width:52rem;margin-bottom:1rem;">Agent output quality is bounded by input quality. Front-load cheap data <em>before</em> the first Claude call. DB queries cost milliseconds and zero tokens. Letting Claude discover context via tool calls costs seconds and thousands of tokens.</p>
+
+  <div class="cols anim">
+    <div class="terminal">
+      <div class="terminal-header">
+        <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
+        <div class="terminal-title">jobDiagnostic.service.ts:632 — buildJobContext()</div>
+      </div>
+      <div class="terminal-body"><span class="cmt">// 7 parallel queries + Sentry + Datadog</span>
+<span class="cmt">// All fetched BEFORE Claude sees anything</span>
+<span class="kw">const</span> [
+  recentExecutions,     <span class="cmt">// Last 5 job runs</span>
+  warnings,             <span class="cmt">// Active job warnings</span>
+  siblings,             <span class="cmt">// Other failures at same location (24h)</span>
+  issueToJobs,          <span class="cmt">// Open SHD issues for this job</span>
+  locationIssueToJobs,  <span class="cmt">// Open issues for the location</span>
+  enrollActions,        <span class="cmt">// Auto-enrollment actions (30d)</span>
+  privatePolicies,      <span class="cmt">// Tenant-uploaded insurance</span>
+] = <span class="kw">await</span> Promise.<span class="fn">all</span>([
+  db.JobExecution.<span class="fn">findAll</span>({ where: { jobId }, limit: <span class="val">5</span> }),
+  db.JobWarning.<span class="fn">findAll</span>({ where: { jobId } }),
+  db.Job.<span class="fn">findAll</span>({ where: { locationId, status: <span class="str">"failed"</span> } }),
+  db.IssueToJob.<span class="fn">findAll</span>({ where: { jobId }, include: [<span class="str">"issue"</span>] }),
+  <span class="cmt">/* ... + Sentry traces + Datadog spans */</span>
+  <span class="cmt">/* ... + recent diagnostics for same errorClass */</span>
+  <span class="cmt">/* ... + tribal knowledge (FMS patterns) */</span>
+]);</div>
+    </div>
+    <div>
+      <div class="card" style="border-color:var(--red);margin-bottom:0.75rem;">
+        <div class="card-label" style="color:var(--red);">Expensive</div>
+        <div class="card-title">Let Claude discover via tool calls</div>
+        <p>Call Sentry → read result → realize it needs DB context → call DB → realize it needs GitHub → ...</p>
+        <p style="margin-top:6px;"><span class="badge badge-red">~5-8 turns</span> <span class="badge badge-red">~$3.21 extra per diag</span></p>
+      </div>
+      <div class="card" style="border-color:var(--green);margin-bottom:0.75rem;">
+        <div class="card-label" style="color:var(--green);">Cheap · What we actually do</div>
+        <div class="card-title">Pre-fetch everything into the prompt</div>
+        <p>7 parallel DB queries + Sentry + Datadog in the prompt. Claude diagnoses in 1-3 turns. Avg 41k input tokens, $0.80 per Opus diagnosis.</p>
+        <p style="margin-top:6px;"><span class="badge badge-green">~1-3 turns</span> <span class="badge badge-green">$0.80 avg</span> <span class="badge badge-green">$0.10 blended</span></p>
+      </div>
+      <div class="insight">
+        <span class="insight-icon">→</span>
+        <span><code>CLAUDE.md</code> is the same pattern — front-loaded context so Claude Code doesn't waste tool calls rediscovering your project conventions.</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ SECTION 4: TOOL DESIGN ═══════════ -->
+<div class="section" id="s4">
+  <div class="label anim">Concept 3 · Tool Design</div>
+  <h1 class="anim" style="margin-bottom:0.5rem;">Tool Descriptions <span class="grad">Drive Selection</span></h1>
+  <p class="anim" style="color:var(--text-dim);max-width:52rem;margin-bottom:1rem;">When the model picks the wrong tool, the correct fix is almost always: <strong style="color:var(--text);">improve the description</strong>. Not few-shot examples (token overhead). Not a routing layer (over-engineered). Descriptions are the primary mechanism LLMs use for tool selection.</p>
+
+  <div class="cols anim" style="margin-bottom:1.25rem;">
+    <div>
+      <div class="terminal" style="border-color:var(--red);">
+        <div class="terminal-header">
+          <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
+          <div class="terminal-title" style="color:var(--red);">Bad — vague, overlapping</div>
+        </div>
+        <div class="terminal-body">{
+  name: <span class="str">"get_sentry_event"</span>,
+  description: <span class="str">"Get error data from Sentry"</span>
+}
+{
+  name: <span class="str">"search_sentry_issues"</span>,
+  description: <span class="str">"Search for errors in Sentry"</span>
+}
+<span class="cmt">// Both "get errors from Sentry" — which one?</span>
+<span class="cmt">// Model can't tell when to use which.</span></div>
+      </div>
+    </div>
+    <div>
+      <div class="terminal" style="border-color:var(--green);">
+        <div class="terminal-header">
+          <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
+          <div class="terminal-title" style="color:var(--green);">Good — scoped, bounded</div>
+        </div>
+        <div class="terminal-body">{
+  name: <span class="str">"get_sentry_event"</span>,
+  description: <span class="str">"Fetch a specific Sentry error</span>
+<span class="str">    event by event ID. Returns exceptions</span>
+<span class="str">    with full stack traces, breadcrumbs,</span>
+<span class="str">    and HTTP request history."</span>
+}
+{
+  name: <span class="str">"search_sentry_issues"</span>,
+  description: <span class="str">"Search Sentry for issues tagged</span>
+<span class="str">    with a specific job ID. Returns</span>
+<span class="str">    occurrence counts across ALL jobs</span>
+<span class="str">    sharing that fingerprint, not</span>
+<span class="str">    specific to this job."</span>
+}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cols anim">
+    <div>
+      <div class="card" style="border-color:var(--green);margin-bottom:0.75rem;">
+        <div class="card-label" style="color:var(--green);">Principle</div>
+        <div class="card-title">4-5 scoped tools, not 18 generic ones</div>
+        <p>Too many tools degrades selection reliability. Each tool has a single purpose and non-overlapping scope. Our agent has exactly 4.</p>
+      </div>
+      <div class="card" style="border-color:var(--blue);margin-bottom:0.75rem;">
+        <div class="card-label" style="color:var(--blue);">Principle</div>
+        <div class="card-title">Include boundaries and negative examples</div>
+        <p>"across ALL jobs, not specific to this job" — prevents misinterpretation. "Prefer get_github_file when you already know the path" — steers selection between similar tools.</p>
+      </div>
+    </div>
+    <div>
+      <div class="card" style="border-color:var(--orange);margin-bottom:0.75rem;">
+        <div class="card-label" style="color:var(--orange);">Exam trap</div>
+        <div class="card-title">Wrong tool selection? Fix the description.</div>
+        <p>The tempting answers: add few-shot examples (token overhead), build a routing layer (over-engineered). The correct answer on the exam and in practice: <strong>rewrite the description</strong> with clearer boundaries.</p>
+      </div>
+      <div class="card" style="border-color:var(--purple);">
+        <div class="card-label" style="color:var(--purple);">Prompt caching</div>
+        <div class="card-title">cache_control on the last tool</div>
+        <p><code>{ type: "ephemeral" }</code> on the last tool + system prompt creates a cache breakpoint. Sequential runs reuse the cached prefix (~5 min TTL).</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ SECTION 5: ENFORCEMENT ═══════════ -->
+<div class="section" id="s5">
+  <div class="label anim">Concept 4 · Prompt Engineering</div>
+  <h1 class="anim" style="margin-bottom:0.5rem;">Programmatic Enforcement</h1>
+  <p class="anim" style="color:var(--text-dim);max-width:52rem;margin-bottom:1rem;">When must something happen? <span style="color:var(--red);">Don't ask the model.</span> Prompt instructions are probabilistic — the model <em>usually</em> follows them. Schema enforcement is deterministic — the model <em>can't</em> deviate.</p>
+
+  <div class="cols anim" style="margin-bottom:1rem;">
+    <div>
+      <div class="terminal" style="border-color:var(--red);">
+        <div class="terminal-header">
+          <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
+          <div class="terminal-title" style="color:var(--red);">Bad — prompt-based (soft)</div>
+        </div>
+        <div class="terminal-body"><span class="kw">const</span> response = <span class="kw">await</span> client.messages.<span class="fn">create</span>({
+  messages: [{ role: <span class="str">"user"</span>,
+    content: <span class="str">"Diagnose this failure. Return JSON</span>
+<span class="str">      with summary and suggestedActions."</span>
+  }],
+});
+<span class="cmt">// Returns: "Here's my analysis:\n```json..."</span>
+<span class="cmt">// Or just prose. Non-deterministic.</span></div>
+      </div>
+    </div>
+    <div>
+      <div class="terminal" style="border-color:var(--green);">
+        <div class="terminal-header">
+          <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
+          <div class="terminal-title" style="color:var(--green);">Good — schema-enforced (hard)</div>
+        </div>
+        <div class="terminal-body"><span class="kw">const</span> response = <span class="kw">await</span> client.messages.<span class="fn">create</span>({
+  messages: [{ role: <span class="str">"user"</span>, content: prompt }],
+  output_config: {
+    format: {
+      type: <span class="str">"json_schema"</span>,
+      schema: { <span class="cmt">/* your schema */</span> },
+  }},
+});
+<span class="cmt">// API guarantees valid JSON matching schema.</span>
+<span class="cmt">// No parsing. Deterministic. Every time.</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cols anim">
+    <div>
+      <div class="card" style="border-color:var(--green);margin-bottom:0.75rem;">
+        <div class="card-label" style="color:var(--green);">Our diagnostic schema</div>
+        <div class="card-title">Enum-constrained actions + sourced evidence</div>
+        <p><code>type</code> enum: <code>retry | link_issue | create_issue | investigate | benign</code>. <code>source</code> enum: <code>sentry | job_context | datadog | tribal_knowledge</code>. SHD consumes these programmatically.</p>
+      </div>
+      <div class="card" style="border-color:var(--orange);margin-bottom:0.75rem;">
+        <div class="card-label" style="color:var(--orange);">Tighter for cheaper models</div>
+        <div class="card-title">Haiku triage: <code>decision: "update" | "escalate"</code></div>
+        <p>That's the entire output space. Can't hallucinate an action type. This tightness is what lets it run unsupervised.</p>
+      </div>
+      <div class="card" style="border-color:var(--blue);">
+        <div class="card-label" style="color:var(--blue);">Structured tool errors too</div>
+        <div class="card-title"><code>{ errorCategory, isRetryable }</code></div>
+        <p>Generic "tool failed" prevents the model from making recovery decisions. Structured errors with <code>transient | not_found | validation | permission</code> let it decide: retry, skip, or work with what it has.</p>
+      </div>
+    </div>
+    <div>
+      <div class="terminal">
+        <div class="terminal-header">
+          <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
+          <div class="terminal-title">claude-agent.ts:631 — TRIAGE_OUTPUT_FORMAT</div>
+        </div>
+        <div class="terminal-body"><span class="kw">const</span> <span class="val">TRIAGE_OUTPUT_FORMAT</span> = {
+  type: <span class="str">"json_schema"</span>,
+  schema: {
+    properties: {
+      decision: {
+        <span class="kw">enum</span>: [<span class="str">"update"</span>, <span class="str">"escalate"</span>],
+      },
+      summary: { type: <span class="str">"string"</span> },
+      rootCause: { type: <span class="str">"string"</span> },
+    },
+    additionalProperties: <span class="val">false</span>,
+  },
+};</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ SECTION 6: MODEL CASCADE ═══════════ -->
+<div class="section" id="s6">
+  <div class="label anim">Concept 5 · Cost Management</div>
+  <h1 class="anim" style="margin-bottom:0.5rem;">Match Cost to <span class="grad">Complexity</span></h1>
+  <p class="anim" style="color:var(--text-dim);max-width:52rem;margin-bottom:1rem;">Not every task needs the most expensive model. Use the cheapest model that can reliably perform the task, with programmatic gates to catch drift. Prompt caching reduces cost for repeated prefixes.</p>
+
+  <div class="anim" style="margin-bottom:1rem;">
+    <div class="flow">
+      <div class="flow-box hl">Error Arrives</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box" style="border-color:var(--purple);color:var(--purple);">Fingerprint</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box" style="border-color:var(--orange);color:var(--orange);">Match Existing?</div>
+    </div>
+    <div class="flow" style="margin-top:0.5rem;">
+      <div style="width:40px;"></div>
+      <div class="flow-box hl-red" style="margin-left:20px;">No → Opus ($0.20–2.50)</div>
+      <div style="width:40px;"></div>
+      <div class="flow-box hl-green">Yes → Haiku ($0.01)</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box" style="border-color:var(--purple);color:var(--purple);">Re-validate @ 12, 50, 100</div>
+    </div>
+  </div>
+
+  <div class="cols anim" style="grid-template-columns:420px 1fr;gap:1.5rem;">
+    <div class="terminal" style="font-size:13px;">
+      <div class="terminal-header">
+        <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
+        <div class="terminal-title">claude-agent.ts</div>
+      </div>
+      <div class="terminal-body" style="font-size:12.5px;line-height:1.65;"><span class="kw">const</span> <span class="val">MODELS_BY_ATTEMPT</span> = {
+  <span class="val">1</span>: <span class="str">"claude-opus-4-6"</span>,        <span class="cmt">// Full investigation</span>
+  <span class="val">2</span>: <span class="str">"claude-opus-4-6"</span>,        <span class="cmt">// Retry + prior findings</span>
+  <span class="val">3</span>: <span class="str">"claude-sonnet-4-6"</span>,      <span class="cmt">// Cheaper + prior findings</span>
+  <span class="val">4</span>: <span class="str">"claude-haiku-4-5-20251001"</span>, <span class="cmt">// Last chance</span>
+};
+
+<span class="kw">const</span> <span class="val">ESCALATION_THRESHOLDS</span> = [<span class="val">12</span>, <span class="val">50</span>, <span class="val">100</span>];
+<span class="kw">const</span> <span class="val">DAILY_FULL_DIAGNOSIS_CAP</span> = <span class="val">100</span>;
+<span class="kw">const</span> <span class="val">DAILY_TRIAGE_CAP</span> = <span class="val">300</span>;</div>
+    </div>
+
+    <!-- Full cost chart inline -->
+    <div id="cost-chart-wrap">
+    <div style="display:flex;align-items:center;gap:1.5rem;margin-bottom:0.5rem;">
+      <div style="font-family:var(--mono);font-size:12px;font-weight:600;color:var(--blue);text-transform:uppercase;letter-spacing:0.1em;">Production · Mar 11–24</div>
+      <div style="display:flex;gap:1.25rem;font-size:12px;color:var(--text-muted);">
+        <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:3px;background:var(--red);display:inline-block;"></span> Opus</span>
+        <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:3px;background:var(--green);display:inline-block;"></span> Haiku</span>
+        <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:3px;background:var(--text-muted);opacity:0.3;display:inline-block;"></span> Free</span>
+      </div>
+      <div style="margin-left:auto;display:grid;grid-template-columns:1fr 1fr 1fr;gap:1.5rem;font-family:var(--mono);font-size:12px;">
+        <span><span style="color:var(--green);font-weight:700;">$38.76</span> <span style="color:var(--text-muted);">actual</span></span>
+        <span><span style="color:var(--red);font-weight:700;">$307.82</span> <span style="color:var(--text-muted);">naive</span></span>
+        <span><span style="color:var(--blue);font-weight:700;">87%</span> <span style="color:var(--text-muted);">saved</span></span>
+      </div>
+    </div>
+    <div id="costChart" style="font-family:var(--mono);font-size:12px;"></div>
+  </div>
+  </div>
+</div>
+
+<!-- ═══════════ SECTION 7: AUTONOMY SPECTRUM ═══════════ -->
+<div class="section" id="s7">
+  <div class="label anim">Concept 6 · Reliability</div>
+  <h1 class="anim" style="margin-bottom:0.5rem;">The Autonomy ↔ <span class="grad">Constraint</span> Tradeoff</h1>
+  <p class="anim" style="color:var(--text-dim);max-width:52rem;margin-bottom:1rem;">You earn autonomy by proving constraints are tight enough. The more programmatic gates around the output, the less human oversight you need. This applies to both API agents and Claude Code workflows.</p>
+
+  <div class="spectrum anim">
+    <div class="spectrum-end" style="background:var(--orange-dim);color:var(--orange);border:1px solid rgba(255,166,87,0.3);">Human-in-the-loop</div>
+    <div class="spectrum-bar" style="background:linear-gradient(to right, var(--orange), var(--blue));"></div>
+    <div class="spectrum-end" style="background:var(--blue-dim);color:var(--blue);border:1px solid rgba(88,166,255,0.3);">Fully Autonomous</div>
+  </div>
+
+  <div class="cols-3 anim">
+    <div class="card" style="border-color:var(--orange);">
+      <div style="margin-bottom:0.5rem;"><span class="badge badge-orange">Interactive</span></div>
+      <div class="card-title">Claude Code Sessions</div>
+      <p>You orchestrate, review every diff. CLAUDE.md provides conventions. The model proposes, you approve.</p>
+      <p style="margin-top:8px;font-family:var(--mono);font-size:11px;color:var(--text-muted);">Gate: human approval per action</p>
+    </div>
+    <div class="card" style="border-color:var(--purple);">
+      <div style="margin-bottom:0.5rem;"><span class="badge badge-orange">Semi</span> <span class="badge badge-blue">Autonomous</span></div>
+      <div class="card-title">SHD Morning Triage</div>
+      <p>Opus diagnoses overnight. Schema-enforced output. Dashboard shows evidence + actions. Human reviews and approves.</p>
+      <p style="margin-top:8px;font-family:var(--mono);font-size:11px;color:var(--text-muted);">Gate: schema + human review</p>
+    </div>
+    <div class="card" style="border-color:var(--blue);">
+      <div style="margin-bottom:0.5rem;"><span class="badge badge-blue">Autonomous</span></div>
+      <div class="card-title">Haiku Repeat Handler</div>
+      <p>Error fingerprinted, matched to group. Haiku updates or escalates. No human until escalation threshold.</p>
+      <p style="margin-top:8px;font-family:var(--mono);font-size:11px;color:var(--text-muted);">Gate: 2-value enum + sampling + daily caps</p>
+    </div>
+  </div>
+
+  <div class="insight anim" style="margin-top:1.25rem;max-width:52rem;">
+    <span class="insight-icon">→</span>
+    <span>The concepts build on each other. Structured output + enum constraints + programmatic gates = the safety stack. And when attempts fail, prior findings are injected into retries (CCAF Task 1.7) so cheaper models build on earlier work instead of starting from scratch.</span>
+  </div>
+</div>
+
+<!-- ═══════════ SECTION 8: RULES & COMMANDS ═══════════ -->
+<div class="section" id="s8">
+  <div class="label anim">Concept 7 · Claude Code Workflows</div>
+  <h1 class="anim" style="margin-bottom:0.5rem;">Rules, Commands, and <span class="grad">Team Patterns</span></h1>
+  <p class="anim" style="color:var(--text-dim);max-width:52rem;margin-bottom:1rem;">Beyond CLAUDE.md — <code>.claude/rules/</code> loads context conditionally by file path, and <code>.claude/commands/</code> gives the whole team reusable workflows via git. Both are context engineering applied to the CLI.</p>
+
+  <div class="cols anim">
+    <div>
+      <div class="terminal" style="margin-bottom:0.75rem;">
+        <div class="terminal-header">
+          <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
+          <div class="terminal-title">.claude/rules/sequelize.md</div>
+        </div>
+        <div class="terminal-body" style="font-size:12.5px;line-height:1.6;"><span class="cmt">---</span>
+<span class="kw">paths</span>: [<span class="str">"app/models/**"</span>, <span class="str">"app/migrations/**"</span>]
+<span class="cmt">---</span>
+- New models use decorator pattern (@Table, @Column)
+- Register in typescriptModelsForSequelizeInitialization
+- Migrations always JS, always with down()
+- Wrap multi-step migrations in transaction
+- Don't use "as" aliases in includes
+- Prefer explicit property assignment over .update()</div>
+      </div>
+      <div class="terminal" style="margin-bottom:0.75rem;">
+        <div class="terminal-header">
+          <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
+          <div class="terminal-title">.claude/rules/fms-integrations.md</div>
+        </div>
+        <div class="terminal-body" style="font-size:12.5px;line-height:1.6;"><span class="cmt">---</span>
+<span class="kw">paths</span>: [<span class="str">"lib/integrations/**"</span>]
+<span class="cmt">---</span>
+- All integrations inherit from abstract.js
+- Check cubby/storedge/sitelink for existing patterns
+- Try/catch per unit, not whole batch
+- Fail loudly — throw, don't default to $0
+- Use abstract methods before creating new ones</div>
+      </div>
+      <div class="terminal">
+        <div class="terminal-header">
+          <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
+          <div class="terminal-title">.claude/rules/testing.md</div>
+        </div>
+        <div class="terminal-body" style="font-size:12.5px;line-height:1.6;"><span class="cmt">---</span>
+<span class="kw">paths</span>: [<span class="str">"**/*.test.ts"</span>, <span class="str">"**/*.test.tsx"</span>]
+<span class="cmt">---</span>
+- Mocha + Chai + Sinon (not Jest)
+- sinon.restore() in afterEach
+- Stub at module boundary, not internals
+- Test behavior, not implementation</div>
+      </div>
+    </div>
+    <div>
+      <div class="card" style="border-color:var(--green);margin-bottom:0.75rem;">
+        <div class="card-label" style="color:var(--green);">Why rules over one big CLAUDE.md</div>
+        <div class="card-title">Glob frontmatter = scoped context</div>
+        <p><code>paths: ["lib/integrations/**"]</code> means FMS patterns only load when you're editing integrations. Sequelize rules only load for models/migrations. Testing rules only for test files. Less noise, more relevant context per session.</p>
+      </div>
+      <div class="terminal" style="margin-bottom:0.75rem;">
+        <div class="terminal-header">
+          <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
+          <div class="terminal-title">.claude/commands/review-pr.md</div>
+        </div>
+        <div class="terminal-body" style="font-size:12.5px;line-height:1.6;"><span class="str"># Review this PR against team patterns</span>
+
+Check for:
+- No `any`, no `ts-ignore`, no `ts-expect-error`
+- Business logic in services, not controllers
+- Fail loudly for critical failures
+- Check existing patterns before adding new code
+- Validate parent resources before creating children
+
+Output scored issues with file:line references.
+<span class="cmt">// Committed to git → whole team gets /review-pr</span></div>
+      </div>
+      <div class="card" style="border-color:var(--purple);">
+        <div class="card-label" style="color:var(--purple);">Commands vs Skills</div>
+        <div class="card-title">Simple markdown → full workflow</div>
+        <p><strong>Commands</strong> (<code>.claude/commands/</code>): markdown prompts, shared via git, invoked with <code>/command-name</code>. <strong>Skills</strong> (<code>.claude/skills/</code>): SKILL.md with frontmatter — <code>context: fork</code> for isolation, <code>allowed-tools</code> for restrictions. Use skills when you need guardrails.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ SECTION 9: TAKEAWAYS ═══════════ -->
+<div class="section" id="s9">
+  <div class="label anim">Takeaways</div>
+  <h1 class="anim" style="margin-bottom:1.5rem;">The <span class="grad">Mental Models</span></h1>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;max-width:56rem;" class="anim">
+    <div class="card">
+      <div class="card-title"><span style="color:var(--blue);">01</span> &nbsp;The Agentic Loop</div>
+      <p><code>stop_reason</code> drives everything. <code>tool_use</code> → execute → feed back. <code>end_turn</code> → done. This is the contract.</p>
+    </div>
+    <div class="card">
+      <div class="card-title"><span style="color:var(--blue);">02</span> &nbsp;Context Engineering</div>
+      <p>Front-load cheap data. CLAUDE.md for CLI, <code>buildJobContext()</code> for APIs. Quality in = quality out.</p>
+    </div>
+    <div class="card">
+      <div class="card-title"><span style="color:var(--blue);">03</span> &nbsp;Tool Descriptions</div>
+      <p>The #1 lever for tool selection. Include boundaries, negative examples, expected formats. 4-5 scoped tools > 18 generic ones.</p>
+    </div>
+    <div class="card">
+      <div class="card-title"><span style="color:var(--blue);">04</span> &nbsp;Programmatic Enforcement</div>
+      <p>Schema > prompts for guarantees. <code>output_config.format</code> for structure. Enum constraints for cheaper models.</p>
+    </div>
+    <div class="card">
+      <div class="card-title"><span style="color:var(--blue);">05</span> &nbsp;Cost ↔ Complexity</div>
+      <p>Opus for novel investigation. Haiku for known patterns. Prompt caching for repeated prefixes. Daily caps as guardrails.</p>
+    </div>
+    <div class="card">
+      <div class="card-title"><span style="color:var(--blue);">06</span> &nbsp;Autonomy ↔ Constraint</div>
+      <p>More autonomy requires tighter programmatic gates. Earn unsupervised operation by proving the output space is constrained.</p>
+    </div>
+  </div>
+
+  <div class="tweet anim" style="margin-top:1.5rem;max-width:50rem;">
+    <div class="tweet-header">
+      <div class="tweet-avatar">AK</div>
+      <div class="tweet-meta">
+        <div class="tweet-name">Andrej Karpathy <span style="color:var(--blue);font-size:12px;">✓</span></div>
+        <div class="tweet-handle">@karpathy · Feb 4, 2026</div>
+      </div>
+    </div>
+    <div class="tweet-body">
+      "The goal is to claim the <span class="hl" style="color:var(--green);">leverage</span> from the use of agents but without any <span class="hl" style="color:var(--green);">compromise on the quality</span> of the software."
+    </div>
+  </div>
+
+  <div class="anim" style="margin-top:1.25rem;font-family:var(--mono);font-size:13px;color:var(--text-muted);display:flex;align-items:center;gap:12px;">
+    <span class="status-dot"></span>
+    <span>We're already doing this. Let's standardize the patterns.</span>
+    <span style="margin-left:auto;">anthropic.com/academy · CCAF exam prep</span>
+  </div>
+</div>
+
+</div><!-- end frame -->
+
+<div class="ghost-track"></div>
+<div class="ghost" id="ghost">👾</div>
+<div class="nav-dots" id="dots"></div>
+
+<script>
+  var frame = document.getElementById('frame');
+  var sections = document.querySelectorAll('.section');
+  var dotsContainer = document.getElementById('dots');
+  var current = 0;
+  var transitioning = false;
+  var LINE_STAGGER = 80;
+  var LEAVE_STAGGER = 50;
+  var LEAVE_DURATION = 500;
+
+  sections.forEach(function(_, i) {
+    var dot = document.createElement('button');
+    dot.className = 'nav-dot' + (i === 0 ? ' active' : '');
+    dot.addEventListener('click', function() { show(i); });
+    dotsContainer.appendChild(dot);
+  });
+  var dots = document.querySelectorAll('.nav-dot');
+
+  // Process terminal bodies into lines
+  document.querySelectorAll('.terminal-body').forEach(function(tb) {
+    var html = tb.innerHTML;
+    var lines = html.split('\n');
+    var wrapped = lines.map(function(line, i) {
+      return '<div class="tline" style="transition-delay:' + (i * LINE_STAGGER + 600) + 'ms">' + (line || ' ') + '</div>';
+    }).join('');
+    tb.innerHTML = wrapped;
+  });
+
+  function setLeaveDelays(section) {
+    section.querySelectorAll('.terminal-body').forEach(function(tb) {
+      var tlines = tb.querySelectorAll('.tline');
+      var count = tlines.length;
+      tlines.forEach(function(line, i) {
+        line.style.transitionDelay = ((count - 1 - i) * LEAVE_STAGGER) + 'ms';
+      });
+    });
+  }
+
+  function setEnterDelays(section) {
+    section.querySelectorAll('.terminal-body').forEach(function(tb) {
+      var tlines = tb.querySelectorAll('.tline');
+      tlines.forEach(function(line, i) {
+        line.style.transitionDelay = (i * LINE_STAGGER + 600) + 'ms';
+      });
+    });
+  }
+
+  function scaleFrame() {
+    var vw = window.innerWidth;
+    var vh = window.innerHeight;
+    var scale = Math.min(vw / 1920, vh / 1080);
+    frame.style.transform = 'scale(' + scale + ')';
+    frame.style.left = ((vw - 1920 * scale) / 2) + 'px';
+    frame.style.top = ((vh - 1080 * scale) / 2) + 'px';
+  }
+  window.addEventListener('resize', scaleFrame);
+  scaleFrame();
+
+  function animateOut(section, callback) {
+    var anims = section.querySelectorAll('.anim');
+    var tlines = section.querySelectorAll('.tline');
+    var count = anims.length;
+    var totalDuration = 0;
+    var ease = 'cubic-bezier(0.22, 1, 0.36, 1)';
+
+    // Animate .anim children out in reverse order (last disappears first)
+    for (var i = 0; i < count; i++) {
+      var reverseIndex = count - 1 - i;
+      var delay = reverseIndex * 50;
+      var dur = 350;
+      if (delay + dur > totalDuration) totalDuration = delay + dur;
+      anims[i].animate([
+        { opacity: 1, transform: 'translateY(0)' },
+        { opacity: 0, transform: 'translateY(14px)' }
+      ], { duration: dur, delay: delay, easing: ease, fill: 'forwards' });
+    }
+
+    // Animate flow children out
+    var flowKids = section.querySelectorAll('.flow > *');
+    flowKids.forEach(function(el, i) {
+      el.animate([
+        { opacity: 1, transform: 'translateX(0)' },
+        { opacity: 0, transform: 'translateX(-8px)' }
+      ], { duration: 200, delay: i * 15, easing: ease, fill: 'forwards' });
+    });
+
+    // Animate terminal lines out bottom-to-top
+    tlines.forEach(function(line, i) {
+      var lineCount = tlines.length;
+      var delay = (lineCount - 1 - i) * 20;
+      line.animate([
+        { opacity: 1, transform: 'translateX(0)', filter: 'blur(0)' },
+        { opacity: 0, transform: 'translateX(6px)', filter: 'blur(2px)' }
+      ], { duration: 200, delay: delay, easing: ease, fill: 'forwards' });
+    });
+
+    // After everything animates out, fire callback
+    setTimeout(callback, totalDuration + 50);
+  }
+
+  function clearAnimations(section) {
+    section.querySelectorAll('.anim, .tline, .flow > *').forEach(function(el) {
+      el.getAnimations().forEach(function(a) { a.cancel(); });
+    });
+  }
+
+  function show(n) {
+    n = Math.max(0, Math.min(n, sections.length - 1));
+    if (n === current && sections[current].classList.contains('active')) return;
+    if (transitioning) return;
+
+    var prev = current;
+    current = n;
+    dots.forEach(function(d, i) { d.classList.toggle('active', i === current); });
+
+    if (prev === n) {
+      sections.forEach(function(s, i) { s.classList.toggle('active', i === current); });
+      setEnterDelays(sections[current]);
+      return;
+    }
+
+    var prevSection = sections[prev];
+    transitioning = true;
+
+    // Ghost hops along the progress track
+    var ghost = document.getElementById('ghost');
+    var progress = current / (sections.length - 1);
+    var trackWidth = window.innerWidth - 80; // 40px padding each side
+    ghost.style.left = (40 + progress * trackWidth - 14) + 'px';
+    ghost.className = 'ghost';
+    void ghost.offsetWidth;
+    ghost.classList.add('jumping');
+    setTimeout(function() { ghost.classList.remove('jumping'); }, 500);
+
+    // Animate the old section out, then switch
+    animateOut(prevSection, function() {
+      prevSection.classList.remove('active');
+      clearAnimations(prevSection);
+      clearAnimations(sections[current]);
+      sections.forEach(function(s, i) { s.classList.toggle('active', i === current); });
+      setEnterDelays(sections[current]);
+      transitioning = false;
+    });
+  }
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'Enter') { e.preventDefault(); show(current + 1); }
+    if (e.key === 'ArrowLeft' || e.key === 'Backspace') { e.preventDefault(); show(current - 1); }
+    if (e.key === 'Home') { e.preventDefault(); show(0); }
+    if (e.key === 'End') { e.preventDefault(); show(sections.length - 1); }
+  });
+
+  show(0);
+  // Set initial ghost position
+  document.getElementById('ghost').style.left = '26px';
+
+  // Particle constellation
+  var canvas = document.getElementById('particles');
+  var ctx = canvas.getContext('2d');
+  var pts = [];
+  var PCOUNT = 90;
+  var CDIST = 180;
+
+  function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+  window.addEventListener('resize', resizeCanvas);
+  resizeCanvas();
+
+  for (var i = 0; i < PCOUNT; i++) {
+    pts.push({
+      x: Math.random() * canvas.width, y: Math.random() * canvas.height,
+      vx: (Math.random() - 0.5) * 0.5, vy: (Math.random() - 0.5) * 0.5,
+      r: Math.random() * 2 + 0.5,
+    });
+  }
+
+  function drawParticles() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    for (var i = 0; i < pts.length; i++) {
+      var p = pts[i];
+      p.x += p.vx; p.y += p.vy;
+      if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
+      if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(88, 166, 255, 0.35)'; ctx.fill();
+      for (var j = i + 1; j < pts.length; j++) {
+        var q = pts[j];
+        var dx = p.x - q.x, dy = p.y - q.y;
+        var dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < CDIST) {
+          ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y);
+          ctx.strokeStyle = 'rgba(88, 166, 255, ' + (0.12 * (1 - dist / CDIST)) + ')';
+          ctx.lineWidth = 0.7; ctx.stroke();
+        }
+      }
+    }
+    requestAnimationFrame(drawParticles);
+  }
+  drawParticles();
+
+  // ── Cost chart (production data Mar 11-26) ──
+  var OPUS_IN=15,OPUS_OUT=75,HAIKU_IN=0.80,HAIKU_OUT=4;
+  var opusDiags=[
+    {d:'Mar 11',in_t:13269,out_t:1420},{d:'Mar 11',in_t:24779,out_t:2251},{d:'Mar 11',in_t:10305,out_t:2086},{d:'Mar 11',in_t:23014,out_t:1662},
+    {d:'Mar 12',in_t:145904,out_t:3505},
+    {d:'Mar 13',in_t:7220,out_t:1057},{d:'Mar 13',in_t:9908,out_t:1141},
+    {d:'Mar 14',in_t:12519,out_t:1177},{d:'Mar 14',in_t:12121,out_t:2324},
+    {d:'Mar 16',in_t:12128,out_t:1781},{d:'Mar 16',in_t:229362,out_t:3314},{d:'Mar 16',in_t:5392,out_t:1976},{d:'Mar 16',in_t:5787,out_t:1750},{d:'Mar 16',in_t:5957,out_t:1862},{d:'Mar 16',in_t:60687,out_t:2287},{d:'Mar 16',in_t:23837,out_t:1159},{d:'Mar 16',in_t:26776,out_t:1110},{d:'Mar 16',in_t:24193,out_t:946},{d:'Mar 16',in_t:21816,out_t:1826},{d:'Mar 16',in_t:5388,out_t:1795},
+    {d:'Mar 17',in_t:9076,out_t:2284},{d:'Mar 17',in_t:10608,out_t:2050},{d:'Mar 17',in_t:8009,out_t:1746},
+    {d:'Mar 18',in_t:52500,out_t:4172},{d:'Mar 18',in_t:9396,out_t:1729},{d:'Mar 18',in_t:8472,out_t:2141},{d:'Mar 18',in_t:9913,out_t:2579},{d:'Mar 18',in_t:66937,out_t:2722},{d:'Mar 18',in_t:11429,out_t:1591},{d:'Mar 18',in_t:7695,out_t:1516},
+    {d:'Mar 19',in_t:10243,out_t:1966},{d:'Mar 19',in_t:13923,out_t:1757},{d:'Mar 19',in_t:3130,out_t:1957},
+    {d:'Mar 20',in_t:11842,out_t:2693},{d:'Mar 20',in_t:94960,out_t:2768},
+    {d:'Mar 21',in_t:36738,out_t:5310},{d:'Mar 21',in_t:116862,out_t:5756},
+    {d:'Mar 22',in_t:116198,out_t:3238},{d:'Mar 22',in_t:11355,out_t:1629},{d:'Mar 22',in_t:9331,out_t:2222},{d:'Mar 22',in_t:10288,out_t:2116},
+    {d:'Mar 23',in_t:101904,out_t:2806},
+    {d:'Mar 24',in_t:127392,out_t:3956},{d:'Mar 24',in_t:11064,out_t:1937},
+  ];
+  var dailyH={
+    'Mar 11':{hi:0,ho:0,tr:0,lk:0,cp:0},'Mar 12':{hi:0,ho:0,tr:0,lk:0,cp:15},'Mar 13':{hi:11506,ho:1620,tr:1,lk:0,cp:7},
+    'Mar 14':{hi:12743,ho:3091,tr:2,lk:0,cp:13},'Mar 16':{hi:0,ho:0,tr:0,lk:0,cp:71},'Mar 17':{hi:0,ho:0,tr:0,lk:0,cp:98},
+    'Mar 18':{hi:0,ho:0,tr:0,lk:11,cp:5},'Mar 19':{hi:4588,ho:1020,tr:3,lk:11,cp:0},'Mar 20':{hi:5722,ho:1471,tr:4,lk:8,cp:0},
+    'Mar 21':{hi:0,ho:0,tr:0,lk:3,cp:0},'Mar 22':{hi:0,ho:0,tr:0,lk:2,cp:0},'Mar 23':{hi:0,ho:0,tr:0,lk:2,cp:0},
+    'Mar 24':{hi:42403,ho:9517,tr:23,lk:12,cp:0},
+    'Mar 25':{hi:1480,ho:376,tr:1,lk:3,cp:0},
+    'Mar 26':{hi:36783,ho:7754,tr:15,lk:2,cp:0},
+  };
+  var chartDays=['Mar 11','Mar 12','Mar 13','Mar 14','Mar 16','Mar 17','Mar 18','Mar 19','Mar 20','Mar 21','Mar 22','Mar 23','Mar 24','Mar 25','Mar 26'];
+  var dayData={};
+  chartDays.forEach(function(d){dayData[d]={opus:[],hCost:0,tr:0,lk:0,cp:0,total:0};});
+  opusDiags.forEach(function(o){
+    var c=(o.in_t/1e6*OPUS_IN)+(o.out_t/1e6*OPUS_OUT);
+    dayData[o.d].opus.push(c);
+  });
+  var maxDayCost=0;
+  chartDays.forEach(function(d){
+    var h=dailyH[d];
+    var hc=(h.hi/1e6*HAIKU_IN)+(h.ho/1e6*HAIKU_OUT);
+    dayData[d].hCost=hc;dayData[d].tr=h.tr;dayData[d].lk=h.lk;dayData[d].cp=h.cp;
+    var opusSum=0;dayData[d].opus.forEach(function(c){opusSum+=c;});
+    dayData[d].total=opusSum+hc;
+    if(dayData[d].total>maxDayCost)maxDayCost=dayData[d].total;
+  });
+
+  // Full opus data with summaries for rich tooltips (production Mar 11-26)
+  var opusFull=[
+    {d:'Mar 11',err:'OktaClientError',in_t:13269,out_t:1420,ms:32526,sum:'Okta SSO 403 during StorEdge auth — transient'},
+    {d:'Mar 11',err:'AxiosError',in_t:24779,out_t:2251,ms:61556,sum:'Cubby 403 on insurance doc upload — resolved next day'},
+    {d:'Mar 11',err:'DuplicatePolicyError',in_t:10305,out_t:2086,ms:45105,sum:'Duplicate enrollment attempt — policy already exists'},
+    {d:'Mar 11',err:'ServerUnresponsiveError',in_t:23014,out_t:1662,ms:40586,sum:'WSS server 500 on ChangeLocation — 20 occurrences'},
+    {d:'Mar 12',err:'Error',in_t:145904,out_t:3505,ms:113851,sum:'Cubby API returns lease referencing nonexistent unit'},
+    {d:'Mar 13',err:'TypeError',in_t:7220,out_t:1057,ms:21202,sum:'Okta SSO response missing user property'},
+    {d:'Mar 13',err:'OktaClientError',in_t:9908,out_t:1141,ms:25330,sum:'Okta account locked out during SiteLink ingest'},
+    {d:'Mar 14',err:'FmsMigrationPending',in_t:12519,out_t:1177,ms:28228,sum:'Migration guard blocking autoEnroll — resolved same day'},
+    {d:'Mar 14',err:'TemporaryError',in_t:12121,out_t:2324,ms:67019,sum:'StorEdge session expired during login'},
+    {d:'Mar 16',err:'TemporaryError',in_t:12128,out_t:1781,ms:62829,sum:'SiteLink SOAP 500 during enrollment'},
+    {d:'Mar 16',err:'SyntaxError',in_t:229362,out_t:3314,ms:106188,sum:'OpenAI max_tokens too low — truncated JSON response'},
+    {d:'Mar 16',err:'PA flow error',in_t:5392,out_t:1976,ms:35366,sum:'SiteLink desktop app crashed during PA flow'},
+    {d:'Mar 16',err:'PA flow error',in_t:5787,out_t:1750,ms:28256,sum:'SiteLink desktop crash — same pattern as #73'},
+    {d:'Mar 16',err:'PA flow error',in_t:5957,out_t:1862,ms:31941,sum:'PA flow timeout — SiteLink desktop unstable'},
+    {d:'Mar 16',err:'WSS silent fail',in_t:60687,out_t:2287,ms:75426,sum:'WSS silently rejects plan add'},
+    {d:'Mar 16',err:'TemporaryError',in_t:23837,out_t:1159,ms:31801,sum:'StorEdge deauth — session credentials expired'},
+    {d:'Mar 16',err:'AxiosError',in_t:26776,out_t:1110,ms:30166,sum:'ECONNRESET from StorEdge during tenant pagination'},
+    {d:'Mar 16',err:'ServerUnresponsive',in_t:24193,out_t:946,ms:26941,sum:'StorEdge insurance API network failure'},
+    {d:'Mar 16',err:'OktaClientError',in_t:21816,out_t:1826,ms:43603,sum:'Okta 403 during StorEdge SSO for ESS ingest'},
+    {d:'Mar 16',err:'PowerAutomateError',in_t:5388,out_t:1795,ms:54714,sum:'PA login timeout — likely invalid FMS credentials'},
+    {d:'Mar 17',err:'TemporaryError',in_t:9076,out_t:2284,ms:64436,sum:'PA Machine 13 paused — 5 locations affected'},
+    {d:'Mar 17',err:'WSS permission',in_t:10608,out_t:2050,ms:44784,sum:'WSS missing SizeAndRates permission'},
+    {d:'Mar 17',err:'WSS permission',in_t:8009,out_t:1746,ms:42090,sum:'Same WSS permission issue — autoEnroll side'},
+    {d:'Mar 18',err:'SyntaxError',in_t:52500,out_t:4172,ms:119514,sum:'WSS AddOns endpoint returned 204 No Content'},
+    {d:'Mar 18',err:'Error',in_t:9396,out_t:1729,ms:39570,sum:'WSS JSON parse failure — permissions issue downstream'},
+    {d:'Mar 18',err:'OktaClientError',in_t:8472,out_t:2141,ms:51430,sum:'Okta 403 — broken SSO config'},
+    {d:'Mar 18',err:'Error',in_t:9913,out_t:2579,ms:60759,sum:'WSS unhandled warning — unit enrollment failing'},
+    {d:'Mar 18',err:'FmsMigrationPending',in_t:66937,out_t:2722,ms:88090,sum:'Migration requires manual verification via wizard'},
+    {d:'Mar 18',err:'ProductError',in_t:11429,out_t:1591,ms:39566,sum:'StorEdge payment error on enrollment'},
+    {d:'Mar 18',err:'Error',in_t:7695,out_t:1516,ms:35593,sum:'Cubby location missing legacy facility ID'},
+    {d:'Mar 19',err:'Error',in_t:10243,out_t:1966,ms:41823,sum:'SSM rejects policy — expiry exceeds 1yr max'},
+    {d:'Mar 19',err:'AxiosError',in_t:13923,out_t:1757,ms:42215,sum:'StorEdge ECONNRESET — transient network issue'},
+    {d:'Mar 19',err:'PowerAutomateError',in_t:3130,out_t:1957,ms:43105,sum:'PA flow timeout during unenroll — tracked in SHD'},
+    {d:'Mar 20',err:'ServerUnresponsive',in_t:11842,out_t:2693,ms:112662,sum:'SSM wrapper 403/503 — transient outage'},
+    {d:'Mar 20',err:'Error',in_t:94960,out_t:2768,ms:84068,sum:'CC Storage changed HTML table structure — code bug'},
+    {d:'Mar 21',err:'Error',in_t:36738,out_t:5310,ms:109241,sum:'SSM rejects past effective date — timezone edge case'},
+    {d:'Mar 21',err:'TemporaryError',in_t:116862,out_t:5756,ms:133223,sum:'StorEdge session expired + TenantNotFound alternating'},
+    {d:'Mar 22',err:'TypeError',in_t:116198,out_t:3238,ms:86440,sum:'Code bug: account null check missing in validatePrivatePolicy'},
+    {d:'Mar 22',err:'AxiosError',in_t:11355,out_t:1629,ms:39070,sum:'StorEdge ECONNRESET — transient'},
+    {d:'Mar 22',err:'TemporaryError',in_t:9331,out_t:2222,ms:48828,sum:'StorEdge session expired + TenantNotFound — same pattern'},
+    {d:'Mar 22',err:'FmsMigrationPending',in_t:10288,out_t:2116,ms:47796,sum:'Migration blocked by StorEdge 403 on /settings endpoints'},
+    {d:'Mar 23',err:'Error',in_t:101904,out_t:2806,ms:81286,sum:'StorEdge facility missing insurance policy assignment'},
+    {d:'Mar 24',err:'TemporaryError',in_t:127392,out_t:3956,ms:108016,sum:'StorEdge insurance API 403 — WAF/CDN block'},
+    {d:'Mar 24',err:'TemporaryError',in_t:11064,out_t:1937,ms:45490,sum:'Same StorEdge 403 — different location'},
+    {d:'Mar 24',err:'Error',in_t:117884,out_t:3463,ms:87323,sum:'StorEdge report generation timeout after 5min'},
+    {d:'Mar 25',err:'ServerUnresponsive',in_t:13464,out_t:2287,ms:57956,sum:'StorEdge rent roll PDF timeout at 303s'},
+    {d:'Mar 25',err:'TypeError',in_t:316263,out_t:5011,ms:106838,sum:'Code bug: Monument unenroll() param signature mismatch'},
+    {d:'Mar 26',err:'ProductError',in_t:10160,out_t:1736,ms:41204,sum:'Cubby future active date — benign transition'},
+  ];
+
+  // Rebuild dayData with full info for tooltips
+  var dayDataFull={};
+  chartDays.forEach(function(d){dayDataFull[d]={opus:[],hCost:0,tr:0,lk:0,cp:0,total:0};});
+  opusFull.forEach(function(o){
+    var c=(o.in_t/1e6*OPUS_IN)+(o.out_t/1e6*OPUS_OUT);
+    dayDataFull[o.d].opus.push({cost:c,err:o.err,in_t:o.in_t,out_t:o.out_t,ms:o.ms});
+  });
+  var maxDayCostF=0;
+  chartDays.forEach(function(d){
+    var h=dailyH[d];
+    var hc=(h.hi/1e6*HAIKU_IN)+(h.ho/1e6*HAIKU_OUT);
+    dayDataFull[d].hCost=hc;dayDataFull[d].tr=h.tr;dayDataFull[d].lk=h.lk;dayDataFull[d].cp=h.cp;
+    var opusSum=0;dayDataFull[d].opus.forEach(function(o){opusSum+=o.cost;});
+    dayDataFull[d].total=opusSum+hc;
+    if(dayDataFull[d].total>maxDayCostF)maxDayCostF=dayDataFull[d].total;
+  });
+
+  var chartEl=document.getElementById('costChart');
+  var maxBarW=700;
+  chartDays.forEach(function(dayName){
+    var d=dayDataFull[dayName];
+    var totalDiags=d.opus.length+d.tr+d.lk+d.cp;
+    var row=document.createElement('div');
+    row.style.cssText='display:grid;grid-template-columns:56px 28px 1fr 70px 70px;gap:8px;align-items:center;padding:3px 0;border-bottom:1px solid var(--border);';
+    var dt=document.createElement('div');
+    dt.style.cssText='color:var(--text-muted);font-size:11px;';
+    dt.textContent=dayName.replace('Mar ','3/');
+    var countEl=document.createElement('div');
+    countEl.style.cssText='font-size:11px;color:var(--text-dim);text-align:right;';
+    countEl.textContent=totalDiags;
+    var bars=document.createElement('div');
+    bars.style.cssText='display:flex;gap:1px;height:18px;align-items:center;position:relative;';
+
+    // Opus bars with hover tooltips
+    d.opus.forEach(function(o){
+      var b=document.createElement('div');
+      b.style.cssText='height:100%;min-width:2px;background:var(--red);border-radius:2px;position:relative;cursor:default;transition:filter 0.15s ease;';
+      b.style.width=Math.max(3,(o.cost/maxDayCostF)*maxBarW)+'px';
+      b.addEventListener('mouseenter',function(){this.style.filter='brightness(1.4)';});
+      b.addEventListener('mouseleave',function(){this.style.filter='';});
+
+      var tip=document.createElement('div');
+      tip.style.cssText='display:none;position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-family:var(--mono);font-size:11px;color:var(--text-dim);white-space:pre;z-index:50;pointer-events:none;line-height:1.6;box-shadow:0 4px 16px rgba(0,0,0,0.4);max-width:400px;white-space:pre-wrap;';
+      var sumShort=o.sum&&o.sum.length>60?o.sum.substring(0,60)+'...':o.sum||'';
+      tip.textContent='$'+o.cost.toFixed(2)+' — '+o.err+'\n'+(o.in_t/1000).toFixed(1)+'k in / '+(o.out_t/1000).toFixed(1)+'k out · '+(o.ms/1000).toFixed(0)+'s'+(sumShort?'\n'+sumShort:'');
+
+      b.addEventListener('mouseenter',function(){tip.style.display='block';});
+      b.addEventListener('mouseleave',function(){tip.style.display='none';});
+      b.appendChild(tip);
+      bars.appendChild(b);
+    });
+
+    // Haiku bar with tooltip
+    if(d.hCost>0){
+      var hb=document.createElement('div');
+      hb.style.cssText='height:100%;min-width:2px;background:var(--green);border-radius:2px;position:relative;cursor:default;transition:filter 0.15s ease;';
+      hb.style.width=Math.max(3,(d.hCost/maxDayCostF)*maxBarW)+'px';
+      hb.addEventListener('mouseenter',function(){this.style.filter='brightness(1.4)';});
+      hb.addEventListener('mouseleave',function(){this.style.filter='';});
+
+      var htip=document.createElement('div');
+      htip.style.cssText='display:none;position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-family:var(--mono);font-size:11px;color:var(--text-dim);white-space:nowrap;z-index:50;pointer-events:none;box-shadow:0 4px 16px rgba(0,0,0,0.4);';
+      htip.textContent='$'+d.hCost.toFixed(3)+' — '+d.tr+' Haiku triages';
+      hb.addEventListener('mouseenter',function(){htip.style.display='block';});
+      hb.addEventListener('mouseleave',function(){htip.style.display='none';});
+      hb.appendChild(htip);
+      bars.appendChild(hb);
+    }
+
+    // Free count label
+    var free=d.lk+d.cp;
+    if(free>0){
+      var fl=document.createElement('span');
+      fl.style.cssText='font-size:10px;color:var(--text-muted);margin-left:6px;white-space:nowrap;';
+      fl.textContent='+'+free+' free';
+      bars.appendChild(fl);
+    }
+
+    var cost=document.createElement('div');
+    cost.style.cssText='text-align:right;font-weight:600;font-size:12px;';
+    cost.style.color=d.total>5?'var(--orange)':d.total>2?'var(--text-dim)':'var(--green)';
+    cost.textContent='$'+d.total.toFixed(2);
+    var perDiag=document.createElement('div');
+    perDiag.style.cssText='text-align:right;font-size:11px;color:var(--text-muted);';
+    var avg=totalDiags>0?(d.total/totalDiags):0;
+    perDiag.textContent=avg>0?'$'+avg.toFixed(2)+'/ea':'—';
+    row.appendChild(dt);row.appendChild(countEl);row.appendChild(bars);row.appendChild(cost);row.appendChild(perDiag);
+    chartEl.appendChild(row);
+  });
+</script>
+
+</body>
+</html>
