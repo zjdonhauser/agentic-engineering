@@ -1089,7 +1089,10 @@ Output scored issues with file:line references.
   }
 
   function clearAnimations(section) {
-    section.querySelectorAll('.anim, .tline, .flow > *').forEach(function(el) {
+    // Cancel all Web Animations on every descendant — not just .anim/.tline/.flow,
+    // since animateOut applies fill:forwards to all of them and any missed element
+    // stays locked in its hidden state when navigating back.
+    section.querySelectorAll('*').forEach(function(el) {
       el.getAnimations().forEach(function(a) { a.cancel(); });
     });
   }
