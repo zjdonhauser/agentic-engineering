@@ -1140,6 +1140,23 @@ Output scored issues with file:line references.
     if (e.key === 'End') { e.preventDefault(); show(sections.length - 1); }
   });
 
+  // Swipe navigation for mobile
+  if (window.innerWidth <= 768) {
+    var touchStartX = 0;
+    var touchStartY = 0;
+    document.addEventListener('touchstart', function(e) {
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+    }, { passive: true });
+    document.addEventListener('touchend', function(e) {
+      var dx = e.changedTouches[0].clientX - touchStartX;
+      var dy = e.changedTouches[0].clientY - touchStartY;
+      if (Math.abs(dx) < 50 || Math.abs(dy) > Math.abs(dx)) return; // too short or vertical
+      if (dx < 0) show(current + 1); // swipe left = next
+      else show(current - 1); // swipe right = prev
+    }, { passive: true });
+  }
+
   show(0);
   // Set initial ghost position
   document.getElementById('ghost').style.left = '26px';
