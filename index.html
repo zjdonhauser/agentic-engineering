@@ -1065,6 +1065,8 @@ Output scored issues with file:line references.
 
   function animateIn(section) {
     var ease = 'cubic-bezier(0.22, 1, 0.36, 1)';
+    // fill:'both' ensures FROM state (opacity:0) applies during delay,
+    // preventing any flash from old fill:forwards animations still on the element.
 
     // Animate .anim children in with staggered delays
     var anims = section.querySelectorAll('.anim');
@@ -1072,7 +1074,7 @@ Output scored issues with file:line references.
       el.animate([
         { opacity: 0, transform: 'translateY(14px)' },
         { opacity: 1, transform: 'translateY(0)' }
-      ], { duration: 600, delay: 150 + i * 150, easing: ease, fill: 'forwards' });
+      ], { duration: 600, delay: 150 + i * 150, easing: ease, fill: 'both' });
     });
 
     // Animate terminal lines in
@@ -1081,7 +1083,7 @@ Output scored issues with file:line references.
       line.animate([
         { opacity: 0, transform: 'translateX(8px)', filter: 'blur(3px)' },
         { opacity: 1, transform: 'translateX(0)', filter: 'blur(0)' }
-      ], { duration: 500, delay: 600 + i * LINE_STAGGER, easing: 'ease', fill: 'forwards' });
+      ], { duration: 500, delay: 600 + i * LINE_STAGGER, easing: 'ease', fill: 'both' });
     });
 
     // Animate flow children in
@@ -1090,7 +1092,7 @@ Output scored issues with file:line references.
       el.animate([
         { opacity: 0, transform: 'translateX(8px)' },
         { opacity: 1, transform: 'translateX(0)' }
-      ], { duration: 400, delay: 600 + i * 100, easing: ease, fill: 'forwards' });
+      ], { duration: 400, delay: 600 + i * 100, easing: ease, fill: 'both' });
     });
   }
 
